@@ -328,6 +328,7 @@ class MagCacheBlockHook(ModelHook):
         output = self.fn_ref.original_forward(*args, **kwargs)
 
         if self.is_tail:
+            print(f"  [MagCache] Skip Success: Step {state.step_index}")
             # Calculate residual for next steps
             if isinstance(output, tuple):
                 out_hidden = output[self._metadata.return_hidden_states_index]
@@ -347,9 +348,12 @@ class MagCacheBlockHook(ModelHook):
                 if diff == 0:
                     residual = out_hidden - in_hidden
                 else:
+                    print(f"  [MagCache Debug] Matching Tail Fallback | Step {state.step_index}")
+                    print(f"  -> In Length: {in_hidden.shape[1]} | Out Length: {out_hidden.shape[1]} (Diff: {diff})")
                     residual = out_hidden - in_hidden  # Fallback to matching tail
             else:
                 # Fallback for completely mismatched shapes
+                print(f"  [MagCache Critical] Total Shape Mismatch: {out_hidden.shape} vs {in_hidden.shape}")
                 residual = out_hidden
 
             if self.config.calibrate:
